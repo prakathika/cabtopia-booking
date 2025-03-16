@@ -21,7 +21,7 @@ const Book = () => {
           <div>
             <h1 className="text-3xl font-bold">Book a Cab</h1>
             <p className="text-muted-foreground mt-2">
-              Fill in the details below to book your ride
+              Fill in the details below to book your ride in India
             </p>
           </div>
 
@@ -31,7 +31,7 @@ const Book = () => {
                 <CardHeader>
                   <CardTitle>Ride Details</CardTitle>
                   <CardDescription>
-                    Enter your pickup and drop-off locations, and schedule your ride
+                    Enter your pickup and drop-off locations in India, and schedule your ride
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -52,7 +52,7 @@ const Book = () => {
                     </div>
                     <div>
                       <h3 className="font-medium">Enter locations</h3>
-                      <p className="text-sm text-muted-foreground">Enter your pickup and dropoff locations.</p>
+                      <p className="text-sm text-muted-foreground">Select your pickup and dropoff locations in India.</p>
                     </div>
                   </div>
                   

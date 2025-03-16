@@ -13,20 +13,23 @@ interface LocationSearchProps {
   required?: boolean;
 }
 
-// Fake locations data for the demo
+// Indian locations data for the demo
 const DEMO_LOCATIONS = [
-  "Empire State Building, New York",
-  "Times Square, New York",
-  "Central Park, New York",
-  "Grand Central Terminal, New York",
-  "Brooklyn Bridge, New York",
-  "JFK Airport, New York",
-  "LaGuardia Airport, New York",
-  "Newark Airport, New Jersey",
-  "Battery Park, New York",
-  "Rockefeller Center, New York",
-  "Metropolitan Museum of Art, New York",
-  "Madison Square Garden, New York",
+  "New Delhi Railway Station, New Delhi",
+  "Indira Gandhi International Airport, Delhi",
+  "Mumbai Central, Mumbai",
+  "Chhatrapati Shivaji Terminus, Mumbai",
+  "Bangalore City Junction, Bangalore",
+  "Kempegowda International Airport, Bangalore",
+  "Chennai Central, Chennai",
+  "Chennai International Airport, Chennai",
+  "Kolkata Railway Station, Kolkata",
+  "Netaji Subhash Chandra Bose Airport, Kolkata",
+  "Hyderabad Railway Station, Hyderabad",
+  "Rajiv Gandhi International Airport, Hyderabad",
+  "Pune Railway Station, Pune",
+  "Ahmedabad Junction, Ahmedabad",
+  "Jaipur Junction, Jaipur",
 ];
 
 const LocationSearch: React.FC<LocationSearchProps> = ({
@@ -50,7 +53,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
       return;
     }
 
-    // Filter demo locations based on search term
+    // Filter Indian locations based on search term
     const filteredLocations = DEMO_LOCATIONS.filter((location) =>
       location.toLowerCase().includes(searchTerm.toLowerCase())
     );

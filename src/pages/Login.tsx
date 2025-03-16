@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +18,8 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/animation/PageTransition";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/firebase";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -45,6 +47,11 @@ const Login = () => {
     }
   };
 
+  const loginAsAdmin = () => {
+    form.setValue("email", ADMIN_EMAIL);
+    form.setValue("password", ADMIN_PASSWORD);
+  };
+
   return (
     <PageTransition>
       <div className="container max-w-md mx-auto py-10">
@@ -55,7 +62,21 @@ const Login = () => {
               Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm">
+                For admin access, use: <strong>{ADMIN_EMAIL}</strong> / <strong>{ADMIN_PASSWORD}</strong>
+                <Button 
+                  variant="link" 
+                  className="text-blue-800 p-0 h-auto mt-1 font-medium"
+                  onClick={loginAsAdmin}
+                >
+                  Fill Admin Credentials
+                </Button>
+              </AlertDescription>
+            </Alert>
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField

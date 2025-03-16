@@ -73,7 +73,7 @@ const AdminBookings: React.FC = () => {
         setFilteredBookings(allBookings);
       } catch (error) {
         console.error("Error fetching bookings:", error);
-        toast.error("Failed to load bookings.");
+        toast.error("Failed to load bookings. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -369,7 +369,7 @@ const AdminBookings: React.FC = () => {
                     </div>
                     
                     <div className="text-sm font-medium">
-                      ${booking.price?.toFixed(2) || "N/A"}
+                      ₹{booking.price?.toFixed(2) || "N/A"}
                     </div>
                   </div>
                   

@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import { getUserBookings, onUserBookingsChange } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface RideHistoryProps {
   limit?: number;
@@ -58,6 +60,7 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
         setBookings(userBookings);
       } catch (error) {
         console.error("Error fetching bookings:", error);
+        toast.error("Failed to load your bookings. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -109,7 +112,9 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
           <p className="text-muted-foreground">
             You haven't booked any rides yet. Start your journey now!
           </p>
-          <Button className="mt-4">Book a Ride</Button>
+          <Link to="/book">
+            <Button className="mt-4">Book a Ride</Button>
+          </Link>
         </CardContent>
       </Card>
     );
@@ -176,7 +181,7 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
                   </div>
                   
                   <div className="text-sm font-medium">
-                    ${booking.price?.toFixed(2) || "N/A"}
+                    ₹{booking.price?.toFixed(2) || "N/A"}
                   </div>
                 </div>
               </div>

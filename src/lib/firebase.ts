@@ -22,7 +22,8 @@ import {
   updateDoc,
   Timestamp,
   onSnapshot,
-  DocumentData
+  DocumentData,
+  writeBatch
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -43,6 +44,80 @@ const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// Admin user credentials
+export const ADMIN_EMAIL = "admin@cabbook.com";
+export const ADMIN_PASSWORD = "admin123";
+
+// Function to ensure admin user exists
+export const ensureAdminExists = async () => {
+  try {
+    // Check if admin user exists in users collection
+    const adminSnapshot = await getDocs(
+      query(collection(db, "users"), where("email", "==", ADMIN_EMAIL))
+    );
+    
+    if (adminSnapshot.empty) {
+      // Try to create admin user
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth, 
+          ADMIN_EMAIL, 
+          ADMIN_PASSWORD
+        );
+        
+        // Create admin user profile
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          name: "Admin User",
+          email: ADMIN_EMAIL,
+          phone: "+91 9876543210",
+          role: "admin",
+          createdAt: Timestamp.now()
+        });
+        
+        console.log("Admin user created successfully");
+      } catch (error: any) {
+        // If admin already exists in auth but not in firestore
+        if (error.code === "auth/email-already-in-use") {
+          // Try to sign in and get uid
+          try {
+            const userCredential = await signInWithEmailAndPassword(
+              auth,
+              ADMIN_EMAIL,
+              ADMIN_PASSWORD
+            );
+            
+            // Create admin user profile if it doesn't exist
+            await setDoc(doc(db, "users", userCredential.user.uid), {
+              name: "Admin User",
+              email: ADMIN_EMAIL,
+              phone: "+91 9876543210",
+              role: "admin",
+              createdAt: Timestamp.now()
+            });
+            
+            // Sign out after creating
+            await firebaseSignOut(auth);
+          } catch (signInError) {
+            console.error("Error ensuring admin exists:", signInError);
+          }
+        } else {
+          console.error("Error creating admin user:", error);
+        }
+      }
+    } else {
+      // Make sure admin has admin role
+      const adminDoc = adminSnapshot.docs[0];
+      if (adminDoc.data().role !== "admin") {
+        await updateDoc(doc(db, "users", adminDoc.id), {
+          role: "admin"
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error checking for admin user:", error);
+  }
+};
 
 // Authentication functions
 export const signIn = (email: string, password: string) => {
@@ -106,23 +181,46 @@ export const createBooking = async (bookingData: any) => {
 };
 
 export const getUserBookings = async (userId: string) => {
-  const bookingsRef = collection(db, "bookings");
-  const q = query(
-    bookingsRef, 
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc")
-  );
-  
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    const bookingsRef = collection(db, "bookings");
+    // Simple query without orderBy to avoid index requirement
+    const q = query(
+      bookingsRef, 
+      where("userId", "==", userId)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Sort on client side instead of in the query
+    return bookings.sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+  } catch (error) {
+    console.error("Error in getUserBookings:", error);
+    throw error;
+  }
 };
 
 export const getAllBookings = async () => {
-  const bookingsRef = collection(db, "bookings");
-  const q = query(bookingsRef, orderBy("createdAt", "desc"));
-  
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    const bookingsRef = collection(db, "bookings");
+    // Simple query without orderBy to avoid index requirement
+    const querySnapshot = await getDocs(bookingsRef);
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Sort on client side instead of in the query
+    return bookings.sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+  } catch (error) {
+    console.error("Error in getAllBookings:", error);
+    throw error;
+  }
 };
 
 export const updateBookingStatus = async (bookingId: string, status: string) => {
@@ -133,28 +231,42 @@ export const updateBookingStatus = async (bookingId: string, status: string) => 
   });
 };
 
-// Real-time listeners
+// Real-time listeners with client-side sorting to avoid index requirements
 export const onUserBookingsChange = (userId: string, callback: (bookings: DocumentData[]) => void) => {
   const bookingsRef = collection(db, "bookings");
   const q = query(
     bookingsRef, 
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc")
+    where("userId", "==", userId)
   );
   
   return onSnapshot(q, (querySnapshot) => {
     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    callback(bookings);
+    
+    // Sort on client side
+    const sortedBookings = bookings.sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    callback(sortedBookings);
   });
 };
 
 export const onAllBookingsChange = (callback: (bookings: DocumentData[]) => void) => {
   const bookingsRef = collection(db, "bookings");
-  const q = query(bookingsRef, orderBy("createdAt", "desc"));
   
-  return onSnapshot(q, (querySnapshot) => {
+  return onSnapshot(bookingsRef, (querySnapshot) => {
     const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    callback(bookings);
+    
+    // Sort on client side
+    const sortedBookings = bookings.sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    callback(sortedBookings);
   });
 };
 
