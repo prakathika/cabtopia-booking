@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -180,9 +179,9 @@ export const createBooking = async (bookingData: any) => {
   return newBookingRef.id;
 };
 
-// Type for document data with timestamp
+// Type for document data with timestamp - making createdAt optional to fix type error
 type FirestoreDocumentWithTimestamp = DocumentData & {
-  createdAt: Timestamp | Date;
+  createdAt?: Timestamp | Date;
 };
 
 export const getUserBookings = async (userId: string) => {
@@ -199,8 +198,8 @@ export const getUserBookings = async (userId: string) => {
     
     // Sort on client side instead of in the query
     return bookings.sort((a, b) => {
-      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : a.createdAt ? new Date(a.createdAt) : new Date();
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : b.createdAt ? new Date(b.createdAt) : new Date();
       return dateB.getTime() - dateA.getTime();
     });
   } catch (error) {
@@ -218,8 +217,8 @@ export const getAllBookings = async () => {
     
     // Sort on client side instead of in the query
     return bookings.sort((a, b) => {
-      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : a.createdAt ? new Date(a.createdAt) : new Date();
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : b.createdAt ? new Date(b.createdAt) : new Date();
       return dateB.getTime() - dateA.getTime();
     });
   } catch (error) {
@@ -249,8 +248,8 @@ export const onUserBookingsChange = (userId: string, callback: (bookings: Docume
     
     // Sort on client side
     const sortedBookings = bookings.sort((a, b) => {
-      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : a.createdAt ? new Date(a.createdAt) : new Date();
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : b.createdAt ? new Date(b.createdAt) : new Date();
       return dateB.getTime() - dateA.getTime();
     });
     
@@ -266,8 +265,8 @@ export const onAllBookingsChange = (callback: (bookings: DocumentData[]) => void
     
     // Sort on client side
     const sortedBookings = bookings.sort((a, b) => {
-      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : a.createdAt ? new Date(a.createdAt) : new Date();
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : b.createdAt ? new Date(b.createdAt) : new Date();
       return dateB.getTime() - dateA.getTime();
     });
     
