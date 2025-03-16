@@ -180,6 +180,11 @@ export const createBooking = async (bookingData: any) => {
   return newBookingRef.id;
 };
 
+// Type for document data with timestamp
+type FirestoreDocumentWithTimestamp = DocumentData & {
+  createdAt: Timestamp | Date;
+};
+
 export const getUserBookings = async (userId: string) => {
   try {
     const bookingsRef = collection(db, "bookings");
@@ -190,12 +195,12 @@ export const getUserBookings = async (userId: string) => {
     );
     
     const querySnapshot = await getDocs(q);
-    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreDocumentWithTimestamp));
     
     // Sort on client side instead of in the query
     return bookings.sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
       return dateB.getTime() - dateA.getTime();
     });
   } catch (error) {
@@ -209,12 +214,12 @@ export const getAllBookings = async () => {
     const bookingsRef = collection(db, "bookings");
     // Simple query without orderBy to avoid index requirement
     const querySnapshot = await getDocs(bookingsRef);
-    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreDocumentWithTimestamp));
     
     // Sort on client side instead of in the query
     return bookings.sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
       return dateB.getTime() - dateA.getTime();
     });
   } catch (error) {
@@ -240,12 +245,12 @@ export const onUserBookingsChange = (userId: string, callback: (bookings: Docume
   );
   
   return onSnapshot(q, (querySnapshot) => {
-    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreDocumentWithTimestamp));
     
     // Sort on client side
     const sortedBookings = bookings.sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
       return dateB.getTime() - dateA.getTime();
     });
     
@@ -257,12 +262,12 @@ export const onAllBookingsChange = (callback: (bookings: DocumentData[]) => void
   const bookingsRef = collection(db, "bookings");
   
   return onSnapshot(bookingsRef, (querySnapshot) => {
-    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const bookings = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreDocumentWithTimestamp));
     
     // Sort on client side
     const sortedBookings = bookings.sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate() : new Date(b.createdAt);
       return dateB.getTime() - dateA.getTime();
     });
     

@@ -63,7 +63,7 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+            <Alert className="bg-blue-50 text-blue-800 border-blue-200">
               <Info className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 For admin access, use: <strong>{ADMIN_EMAIL}</strong> / <strong>{ADMIN_PASSWORD}</strong>
