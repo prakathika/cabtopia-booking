@@ -1,14 +1,52 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminBookings from "@/components/ui/AdminBookings";
 import PageTransition from "@/components/animation/PageTransition";
 import { useAuth } from "@/context/AuthContext";
+import { getAllBookings } from "@/lib/firebase";
+import { DocumentData } from "firebase/firestore";
 
 const Admin = () => {
   const { currentUser, userProfile, loading } = useAuth();
+  const [bookings, setBookings] = useState<DocumentData[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    active: 0,
+    users: 0,
+  });
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const allBookings = await getAllBookings();
+        setBookings(allBookings);
+        
+        // Calculate stats
+        const pendingCount = allBookings.filter(booking => booking.status === "pending").length;
+        const activeCount = allBookings.filter(booking => booking.status === "in-progress").length;
+        
+        // Get unique users count
+        const uniqueUsers = new Set(allBookings.map(booking => booking.userId));
+        
+        setStats({
+          total: allBookings.length,
+          pending: pendingCount,
+          active: activeCount,
+          users: uniqueUsers.size,
+        });
+      } catch (error) {
+        console.error("Error fetching bookings for stats:", error);
+      }
+    };
+
+    if (userProfile?.role === "admin") {
+      fetchBookings();
+    }
+  }, [userProfile]);
 
   // If user is not logged in and finished loading, redirect to login
   if (!loading && !currentUser) {
@@ -38,8 +76,8 @@ const Admin = () => {
                 <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">256</div>
-                <p className="text-xs text-muted-foreground mt-1">+12% from last month</p>
+                <div className="text-2xl font-bold">{stats.total}</div>
+                <p className="text-xs text-muted-foreground mt-1">All time bookings</p>
               </CardContent>
             </Card>
             
@@ -48,8 +86,8 @@ const Admin = () => {
                 <CardTitle className="text-sm font-medium">Pending Rides</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">15</div>
-                <p className="text-xs text-muted-foreground mt-1">-3% from last week</p>
+                <div className="text-2xl font-bold">{stats.pending}</div>
+                <p className="text-xs text-muted-foreground mt-1">Awaiting confirmation</p>
               </CardContent>
             </Card>
             
@@ -58,8 +96,8 @@ const Admin = () => {
                 <CardTitle className="text-sm font-medium">Active Rides</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8</div>
-                <p className="text-xs text-muted-foreground mt-1">+2 since yesterday</p>
+                <div className="text-2xl font-bold">{stats.active}</div>
+                <p className="text-xs text-muted-foreground mt-1">Currently in progress</p>
               </CardContent>
             </Card>
             
@@ -68,8 +106,8 @@ const Admin = () => {
                 <CardTitle className="text-sm font-medium">Total Users</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">124</div>
-                <p className="text-xs text-muted-foreground mt-1">+5 new users this week</p>
+                <div className="text-2xl font-bold">{stats.users}</div>
+                <p className="text-xs text-muted-foreground mt-1">Unique customers</p>
               </CardContent>
             </Card>
           </div>
