@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useNavigate } from "react-router-dom";
-import { AlertCircle, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ShieldCheck, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,17 +26,35 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/animation/PageTransition";
+import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/firebase";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  email: z
+    .string()
+    .email({ message: "Please enter a valid email address" })
+    .refine(val => val === ADMIN_EMAIL, {
+      message: "Invalid admin credentials"
+    }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" })
+    .refine(val => val === ADMIN_PASSWORD, {
+      message: "Invalid admin credentials"
+    }),
 });
 
-const Login = () => {
-  const { login } = useAuth();
+const AdminLogin = () => {
+  const { login, isAdmin } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Redirect if already logged in as admin
+  React.useEffect(() => {
+    if (isAdmin) {
+      navigate("/admin");
+    }
+  }, [isAdmin, navigate]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,8 +70,9 @@ const Login = () => {
     
     try {
       await login(values.email, values.password);
+      navigate("/admin");
     } catch (err: any) {
-      setError(err.message || "Failed to login. Please check your credentials and try again.");
+      setError(err.message || "Failed to login. Please check your admin credentials and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -64,9 +83,14 @@ const Login = () => {
       <div className="container max-w-md mx-auto py-12 px-4">
         <Card className="w-full">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Login</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account
+            <div className="flex justify-center mb-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <ShieldCheck className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+            <CardDescription className="text-center">
+              Enter your administrator credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -84,9 +108,9 @@ const Login = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Admin Email</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="Enter your email" autoComplete="email" />
+                        <Input {...field} placeholder="admin@gmail.com" autoComplete="email" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -97,12 +121,12 @@ const Login = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>Admin Password</FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
                           type="password" 
-                          placeholder="Enter your password"
+                          placeholder="Enter admin password"
                           autoComplete="current-password"
                         />
                       </FormControl>
@@ -111,29 +135,15 @@ const Login = () => {
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
+                  {isLoading ? "Logging in..." : "Login as Admin"}
                 </Button>
               </form>
             </Form>
-            
-            <div className="mt-4 text-center">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/admin-login')}
-                className="w-full flex items-center justify-center gap-2 mt-3"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Go to Admin Login
-              </Button>
-            </div>
           </CardContent>
           <CardFooter className="flex justify-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary font-medium hover:underline">
-                Register
-              </Link>
-            </p>
+            <Button variant="link" onClick={() => navigate("/login")}>
+              Return to Normal Login
+            </Button>
           </CardFooter>
         </Card>
       </div>
@@ -141,4 +151,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default AdminLogin;
