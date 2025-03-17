@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/animation/PageTransition";
+import Navbar from "@/components/layout/Navbar";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -60,84 +61,87 @@ const Login = () => {
   };
 
   return (
-    <PageTransition>
-      <div className="container max-w-md mx-auto py-12 px-4">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Login</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Enter your email" autoComplete="email" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="password" 
-                          placeholder="Enter your password"
-                          autoComplete="current-password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
+    <>
+      <Navbar />
+      <PageTransition>
+        <div className="container max-w-md mx-auto py-24 px-4">
+          <Card className="w-full">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold">Login</CardTitle>
+              <CardDescription>
+                Enter your credentials to access your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter your email" autoComplete="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="password" 
+                            placeholder="Enter your password"
+                            autoComplete="current-password"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Login"}
+                  </Button>
+                </form>
+              </Form>
+              
+              <div className="mt-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/admin-login')}
+                  className="w-full flex items-center justify-center gap-2 mt-3"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Go to Admin Login
                 </Button>
-              </form>
-            </Form>
-            
-            <div className="mt-4 text-center">
-              <Button 
-                variant="outline" 
-                onClick={() => navigate('/admin-login')}
-                className="w-full flex items-center justify-center gap-2 mt-3"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Go to Admin Login
-              </Button>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary font-medium hover:underline">
-                Register
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
-      </div>
-    </PageTransition>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <p className="text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link to="/register" className="text-primary font-medium hover:underline">
+                  Register
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
+      </PageTransition>
+    </>
   );
 };
 

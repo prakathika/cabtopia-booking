@@ -44,9 +44,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Admin user credentials
-export const ADMIN_EMAIL = "admin@gmail.com";
-export const ADMIN_PASSWORD = "admin123";
+// Admin credentials
+export const ADMIN_EMAIL = "admin@gmail.com" as const;
+export const ADMIN_PASSWORD = "admin123" as const;
 
 // Function to ensure admin user exists
 export const ensureAdminExists = async () => {

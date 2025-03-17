@@ -27,6 +27,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/animation/PageTransition";
 import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/firebase";
+import Navbar from "@/components/layout/Navbar";
 
 const formSchema = z.object({
   email: z
@@ -59,8 +60,8 @@ const AdminLogin = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: ADMIN_EMAIL, // Use the constant here
+      password: "", // Default to empty for security
     },
   });
 
@@ -79,75 +80,78 @@ const AdminLogin = () => {
   };
 
   return (
-    <PageTransition>
-      <div className="container max-w-md mx-auto py-12 px-4">
-        <Card className="w-full">
-          <CardHeader className="space-y-1">
-            <div className="flex justify-center mb-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <ShieldCheck className="h-8 w-8 text-primary" />
+    <>
+      <Navbar />
+      <PageTransition>
+        <div className="container max-w-md mx-auto py-24 px-4">
+          <Card className="w-full">
+            <CardHeader className="space-y-1">
+              <div className="flex justify-center mb-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <ShieldCheck className="h-8 w-8 text-primary" />
+                </div>
               </div>
-            </div>
-            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
-            <CardDescription className="text-center">
-              Enter your administrator credentials to access the admin dashboard
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Admin Email</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="admin@gmail.com" autoComplete="email" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Admin Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="password" 
-                          placeholder="Enter admin password"
-                          autoComplete="current-password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login as Admin"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Button variant="link" onClick={() => navigate("/login")}>
-              Return to Normal Login
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    </PageTransition>
+              <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+              <CardDescription className="text-center">
+                Enter your administrator credentials to access the admin dashboard
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Admin Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="admin@gmail.com" autoComplete="email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Admin Password</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="password" 
+                            placeholder="Enter admin password"
+                            autoComplete="current-password"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Logging in..." : "Login as Admin"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <Button variant="link" onClick={() => navigate("/login")}>
+                Return to Normal Login
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </PageTransition>
+    </>
   );
 };
 
