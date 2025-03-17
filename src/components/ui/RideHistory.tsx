@@ -7,11 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { getUserBookings, onUserBookingsChange } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import RideDetails from "./RideDetails";
 
 interface RideHistoryProps {
   limit?: number;
@@ -49,6 +51,9 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
   const { currentUser } = useAuth();
   const [bookings, setBookings] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<DocumentData | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     if (!currentUser) return;
@@ -77,6 +82,36 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
 
     return () => unsubscribe();
   }, [currentUser]);
+
+  // Handle opening ride details
+  const handleViewDetails = (booking: DocumentData) => {
+    setSelectedBooking(booking);
+    setDetailsOpen(true);
+  };
+
+  // Filter bookings based on tab
+  const getFilteredBookings = () => {
+    if (activeTab === "all") {
+      return limit ? bookings.slice(0, limit) : bookings;
+    }
+    
+    const filtered = bookings.filter(booking => {
+      switch (activeTab) {
+        case "upcoming":
+          return booking.status === "pending";
+        case "active":
+          return booking.status === "in-progress";
+        case "completed":
+          return booking.status === "completed";
+        case "cancelled":
+          return booking.status === "cancelled";
+        default:
+          return true;
+      }
+    });
+    
+    return limit ? filtered.slice(0, limit) : filtered;
+  };
 
   if (loading) {
     return (
@@ -120,83 +155,147 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
     );
   }
 
-  // Apply limit if specified
-  const displayedBookings = limit ? bookings.slice(0, limit) : bookings;
-
-  return (
-    <div className="space-y-4">
-      {displayedBookings.map((booking) => {
-        const bookingDate = booking.date?.toDate ? booking.date.toDate() : new Date(booking.date);
+  // Add tabs if not limited
+  if (!limit) {
+    return (
+      <>
+        <Tabs defaultValue="all" onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-5 w-full">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value={activeTab} className="mt-4">
+            <div className="space-y-4">
+              {renderBookings(getFilteredBookings())}
+            </div>
+          </TabsContent>
+        </Tabs>
         
-        return (
-          <Card key={booking.id} className="overflow-hidden animate-slide-in-up">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">
-                  {booking.cabType.charAt(0).toUpperCase() + booking.cabType.slice(1)} Ride
-                </CardTitle>
-                <Badge 
-                  variant="outline" 
-                  className={cn("flex items-center", getStatusColor(booking.status))}
-                >
-                  {getStatusIcon(booking.status)}
-                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                </Badge>
-              </div>
-              <CardDescription>
-                Booking ID: {booking.bookingId?.slice(-6).toUpperCase() || booking.id?.slice(-6).toUpperCase()}
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex">
-                  <div className="mr-2 flex flex-col items-center">
-                    <div className="h-5 w-5 rounded-full border-2 border-primary flex items-center justify-center">
-                      <div className="h-2 w-2 rounded-full bg-primary"></div>
-                    </div>
-                    <div className="w-0.5 h-10 bg-border"></div>
-                    <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                      <MapPin className="h-3 w-3 text-primary-foreground" />
-                    </div>
-                  </div>
-                  <div className="space-y-3 flex-1">
-                    <div>
-                      <p className="text-sm font-medium line-clamp-1">From: {booking.pickupLocation}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium line-clamp-1">To: {booking.dropoffLocation}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center">
-                    <CalendarClock size={16} className="mr-2 text-muted-foreground" />
-                    <span className="text-sm">
-                      {format(bookingDate, "MMM d, yyyy")} at {booking.time}
-                    </span>
-                  </div>
-                  
-                  <div className="text-sm font-medium">
-                    ₹{booking.price?.toFixed(2) || "N/A"}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            
-            <CardFooter className="pt-0">
-              <Button variant="outline" size="sm" className="w-full">
-                View Details
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      })}
-    </div>
+        {selectedBooking && (
+          <RideDetails 
+            booking={selectedBooking} 
+            open={detailsOpen} 
+            onOpenChange={setDetailsOpen} 
+          />
+        )}
+      </>
+    );
+  }
+
+  // Limited view for profile page
+  return (
+    <>
+      <div className="space-y-4">
+        {renderBookings(getFilteredBookings())}
+      </div>
+      
+      {selectedBooking && (
+        <RideDetails 
+          booking={selectedBooking} 
+          open={detailsOpen} 
+          onOpenChange={setDetailsOpen} 
+        />
+      )}
+    </>
   );
+
+  function renderBookings(bookings: DocumentData[]) {
+    if (bookings.length === 0) {
+      return (
+        <Card>
+          <CardContent className="text-center py-10">
+            <AlertCircle className="mx-auto mb-4 text-muted-foreground" size={40} />
+            <h3 className="text-xl font-medium mb-1">No rides found</h3>
+            <p className="text-muted-foreground">
+              {activeTab === "all" 
+                ? "You haven't booked any rides yet." 
+                : `You don't have any ${activeTab} rides.`}
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return bookings.map((booking) => {
+      const bookingDate = booking.date?.toDate ? booking.date.toDate() : new Date(booking.date);
+      
+      return (
+        <Card key={booking.id} className="overflow-hidden animate-slide-in-up">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">
+                {booking.cabType.charAt(0).toUpperCase() + booking.cabType.slice(1)} Ride
+              </CardTitle>
+              <Badge 
+                variant="outline" 
+                className={cn("flex items-center", getStatusColor(booking.status))}
+              >
+                {getStatusIcon(booking.status)}
+                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              </Badge>
+            </div>
+            <CardDescription>
+              Booking ID: {booking.bookingId?.slice(-6).toUpperCase() || booking.id?.slice(-6).toUpperCase()}
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex">
+                <div className="mr-2 flex flex-col items-center">
+                  <div className="h-5 w-5 rounded-full border-2 border-primary flex items-center justify-center">
+                    <div className="h-2 w-2 rounded-full bg-primary"></div>
+                  </div>
+                  <div className="w-0.5 h-10 bg-border"></div>
+                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                    <MapPin className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                </div>
+                <div className="space-y-3 flex-1">
+                  <div>
+                    <p className="text-sm font-medium line-clamp-1">From: {booking.pickupLocation}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium line-clamp-1">To: {booking.dropoffLocation}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="flex items-center gap-6">
+                <div className="flex items-center">
+                  <CalendarClock size={16} className="mr-2 text-muted-foreground" />
+                  <span className="text-sm">
+                    {format(bookingDate, "MMM d, yyyy")} at {booking.time}
+                  </span>
+                </div>
+                
+                <div className="text-sm font-medium">
+                  ₹{booking.price?.toFixed(2) || "N/A"}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          
+          <CardFooter className="pt-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => handleViewDetails(booking)}
+            >
+              View Details
+            </Button>
+          </CardFooter>
+        </Card>
+      );
+    });
+  }
 };
 
 export default RideHistory;

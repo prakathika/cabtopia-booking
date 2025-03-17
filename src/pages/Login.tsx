@@ -139,7 +139,7 @@ const Login = () => {
                   disabled={isLoading}
                   className="w-full"
                 >
-                  Login as Admin
+                  Login as Admin (admin@gmail.com)
                 </Button>
               </div>
             </div>

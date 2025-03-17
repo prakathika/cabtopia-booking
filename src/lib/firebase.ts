@@ -45,7 +45,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Admin user credentials
-export const ADMIN_EMAIL = "admin@cabbook.com";
+export const ADMIN_EMAIL = "admin@gmail.com";
 export const ADMIN_PASSWORD = "admin123";
 
 // Function to ensure admin user exists

@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminBookings from "@/components/ui/AdminBookings";
+import AdminDrivers from "@/components/ui/AdminDrivers";
 import PageTransition from "@/components/animation/PageTransition";
 import { useAuth } from "@/context/AuthContext";
 import { getAllBookings } from "@/lib/firebase";
@@ -65,7 +66,7 @@ const Admin = () => {
           <div>
             <h1 className="text-3xl font-bold">Admin Dashboard</h1>
             <p className="text-muted-foreground mt-2">
-              Manage bookings and monitor system activity
+              Manage bookings, drivers, and monitor system activity
             </p>
           </div>
 
@@ -112,12 +113,12 @@ const Admin = () => {
             </Card>
           </div>
 
-          {/* Bookings Management */}
+          {/* Management Tabs */}
           <Card>
             <CardHeader>
-              <CardTitle>Bookings Management</CardTitle>
+              <CardTitle>Management Console</CardTitle>
               <CardDescription>
-                View and manage all cab bookings
+                View and manage all cab bookings and drivers
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -131,9 +132,7 @@ const Admin = () => {
                     <AdminBookings />
                   </TabsContent>
                   <TabsContent value="drivers">
-                    <div className="text-center py-10">
-                      <p className="text-muted-foreground">Driver management coming soon</p>
-                    </div>
+                    <AdminDrivers />
                   </TabsContent>
                 </div>
               </Tabs>
