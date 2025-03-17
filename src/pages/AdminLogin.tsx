@@ -26,22 +26,15 @@ import {
 } from "@/components/ui/form";
 import { useAuth } from "@/context/AuthContext";
 import PageTransition from "@/components/animation/PageTransition";
-import { ADMIN_EMAIL, ADMIN_PASSWORD } from "@/lib/firebase";
 import Navbar from "@/components/layout/Navbar";
 
 const formSchema = z.object({
   email: z
     .string()
-    .email({ message: "Please enter a valid email address" })
-    .refine(val => val === ADMIN_EMAIL, {
-      message: "Invalid admin credentials"
-    }),
+    .email({ message: "Please enter a valid email address" }),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 characters" })
-    .refine(val => val === ADMIN_PASSWORD, {
-      message: "Invalid admin credentials"
-    }),
+    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 const AdminLogin = () => {
@@ -60,7 +53,7 @@ const AdminLogin = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: ADMIN_EMAIL, // Use the constant here
+      email: "admin@gmail.com", // Fixed default admin email
       password: "", // Default to empty for security
     },
   });
@@ -70,8 +63,13 @@ const AdminLogin = () => {
     setError(null);
     
     try {
-      await login(values.email, values.password);
-      navigate("/admin");
+      // Check if the credentials match admin credentials
+      if (values.email === "admin@gmail.com" && values.password === "admin123") {
+        await login(values.email, values.password);
+        navigate("/admin");
+      } else {
+        throw new Error("Invalid admin credentials");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to login. Please check your admin credentials and try again.");
     } finally {
