@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { User, Clock, Calendar, MapPin, PhoneCall, Mail, LogOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import Navbar from "@/components/layout/Navbar";
 
 const Profile = () => {
   const { currentUser, userProfile, logout, loading } = useAuth();
+  const [activeFilter, setActiveFilter] = useState("all");
 
   // If user is not logged in and finished loading, redirect to login
   if (!loading && !currentUser) {
@@ -50,6 +51,10 @@ const Profile = () => {
       .join("")
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveFilter(value);
   };
 
   return (
@@ -131,26 +136,16 @@ const Profile = () => {
                   <CardDescription>View your booking history</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="all">
-                    <TabsList className="grid w-full grid-cols-4">
+                  <Tabs defaultValue="all" onValueChange={handleTabChange}>
+                    <TabsList className="grid w-full grid-cols-5">
                       <TabsTrigger value="all">All</TabsTrigger>
                       <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                      <TabsTrigger value="active">Active</TabsTrigger>
                       <TabsTrigger value="completed">Completed</TabsTrigger>
                       <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
                     </TabsList>
                     <div className="mt-4">
-                      <TabsContent value="all">
-                        <RideHistory />
-                      </TabsContent>
-                      <TabsContent value="upcoming">
-                        <RideHistory />
-                      </TabsContent>
-                      <TabsContent value="completed">
-                        <RideHistory />
-                      </TabsContent>
-                      <TabsContent value="cancelled">
-                        <RideHistory />
-                      </TabsContent>
+                      <RideHistory filter={activeFilter} />
                     </div>
                   </Tabs>
                 </CardContent>

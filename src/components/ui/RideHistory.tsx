@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/context/AuthContext";
 import { getUserBookings, onUserBookingsChange } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
@@ -17,6 +16,7 @@ import RideDetails from "./RideDetails";
 
 interface RideHistoryProps {
   limit?: number;
+  filter?: string;
 }
 
 const getStatusColor = (status: string) => {
@@ -47,13 +47,12 @@ const getStatusIcon = (status: string) => {
   }
 };
 
-const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
+const RideHistory: React.FC<RideHistoryProps> = ({ limit, filter = "all" }) => {
   const { currentUser } = useAuth();
   const [bookings, setBookings] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<DocumentData | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     if (!currentUser) return;
@@ -108,14 +107,14 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
     setDetailsOpen(true);
   };
 
-  // Filter bookings based on tab
+  // Filter bookings based on filter prop
   const getFilteredBookings = () => {
-    if (activeTab === "all") {
+    if (filter === "all") {
       return limit ? bookings.slice(0, limit) : bookings;
     }
     
     const filtered = bookings.filter(booking => {
-      switch (activeTab) {
+      switch (filter) {
         case "upcoming":
           return booking.status === "pending";
         case "active":
@@ -163,14 +162,18 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
     );
   }
 
-  if (bookings.length === 0) {
+  const filteredBookings = getFilteredBookings();
+
+  if (filteredBookings.length === 0) {
     return (
       <Card>
         <CardContent className="text-center py-10">
           <Car className="mx-auto mb-4 text-muted-foreground" size={40} />
-          <h3 className="text-xl font-medium mb-1">No rides yet</h3>
+          <h3 className="text-xl font-medium mb-1">No rides found</h3>
           <p className="text-muted-foreground">
-            You haven't booked any rides yet. Start your journey now!
+            {filter === "all" 
+              ? "You haven't booked any rides yet." 
+              : `You don't have any ${filter} rides.`}
           </p>
           <Link to="/book">
             <Button className="mt-4">Book a Ride</Button>
@@ -180,42 +183,85 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
     );
   }
 
-  // Add tabs if not limited
-  if (!limit) {
-    return (
-      <>
-        <Tabs defaultValue="all" onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-5 w-full">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value={activeTab} className="mt-4">
-            <div className="space-y-4">
-              {renderBookings(getFilteredBookings())}
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        {selectedBooking && (
-          <RideDetails 
-            booking={selectedBooking} 
-            open={detailsOpen} 
-            onOpenChange={setDetailsOpen} 
-          />
-        )}
-      </>
-    );
-  }
-
-  // Limited view for profile page
+  // Render the list of bookings
   return (
     <>
       <div className="space-y-4">
-        {renderBookings(getFilteredBookings())}
+        {filteredBookings.map((booking) => {
+          const bookingDate = booking.date?.toDate ? booking.date.toDate() : new Date(booking.date);
+          
+          return (
+            <Card key={booking.id} className="overflow-hidden animate-slide-in-up">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">
+                    {booking.cabType.charAt(0).toUpperCase() + booking.cabType.slice(1)} Ride
+                  </CardTitle>
+                  <Badge 
+                    variant="outline" 
+                    className={cn("flex items-center", getStatusColor(booking.status))}
+                  >
+                    {getStatusIcon(booking.status)}
+                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  </Badge>
+                </div>
+                <CardDescription>
+                  Booking ID: {booking.bookingId?.slice(-6).toUpperCase() || booking.id?.slice(-6).toUpperCase()}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex">
+                    <div className="mr-2 flex flex-col items-center">
+                      <div className="h-5 w-5 rounded-full border-2 border-primary flex items-center justify-center">
+                        <div className="h-2 w-2 rounded-full bg-primary"></div>
+                      </div>
+                      <div className="w-0.5 h-10 bg-border"></div>
+                      <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                        <MapPin className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    </div>
+                    <div className="space-y-3 flex-1">
+                      <div>
+                        <p className="text-sm font-medium line-clamp-1">From: {booking.pickupLocation}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium line-clamp-1">To: {booking.dropoffLocation}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center">
+                      <CalendarClock size={16} className="mr-2 text-muted-foreground" />
+                      <span className="text-sm">
+                        {format(bookingDate, "MMM d, yyyy")} at {booking.time}
+                      </span>
+                    </div>
+                    
+                    <div className="text-sm font-medium">
+                      ₹{booking.price?.toFixed(2) || "N/A"}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              
+              <CardFooter className="pt-0">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={() => handleViewDetails(booking)}
+                >
+                  View Details
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
       
       {selectedBooking && (
@@ -227,100 +273,6 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
       )}
     </>
   );
-
-  function renderBookings(bookings: DocumentData[]) {
-    if (bookings.length === 0) {
-      return (
-        <Card>
-          <CardContent className="text-center py-10">
-            <AlertCircle className="mx-auto mb-4 text-muted-foreground" size={40} />
-            <h3 className="text-xl font-medium mb-1">No rides found</h3>
-            <p className="text-muted-foreground">
-              {activeTab === "all" 
-                ? "You haven't booked any rides yet." 
-                : `You don't have any ${activeTab} rides.`}
-            </p>
-          </CardContent>
-        </Card>
-      );
-    }
-    
-    return bookings.map((booking) => {
-      const bookingDate = booking.date?.toDate ? booking.date.toDate() : new Date(booking.date);
-      
-      return (
-        <Card key={booking.id} className="overflow-hidden animate-slide-in-up">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                {booking.cabType.charAt(0).toUpperCase() + booking.cabType.slice(1)} Ride
-              </CardTitle>
-              <Badge 
-                variant="outline" 
-                className={cn("flex items-center", getStatusColor(booking.status))}
-              >
-                {getStatusIcon(booking.status)}
-                {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-              </Badge>
-            </div>
-            <CardDescription>
-              Booking ID: {booking.bookingId?.slice(-6).toUpperCase() || booking.id?.slice(-6).toUpperCase()}
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex">
-                <div className="mr-2 flex flex-col items-center">
-                  <div className="h-5 w-5 rounded-full border-2 border-primary flex items-center justify-center">
-                    <div className="h-2 w-2 rounded-full bg-primary"></div>
-                  </div>
-                  <div className="w-0.5 h-10 bg-border"></div>
-                  <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                    <MapPin className="h-3 w-3 text-primary-foreground" />
-                  </div>
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <p className="text-sm font-medium line-clamp-1">From: {booking.pickupLocation}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium line-clamp-1">To: {booking.dropoffLocation}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="flex items-center gap-6">
-                <div className="flex items-center">
-                  <CalendarClock size={16} className="mr-2 text-muted-foreground" />
-                  <span className="text-sm">
-                    {format(bookingDate, "MMM d, yyyy")} at {booking.time}
-                  </span>
-                </div>
-                
-                <div className="text-sm font-medium">
-                  ₹{booking.price?.toFixed(2) || "N/A"}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          
-          <CardFooter className="pt-0">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full"
-              onClick={() => handleViewDetails(booking)}
-            >
-              View Details
-            </Button>
-          </CardFooter>
-        </Card>
-      );
-    });
-  }
 };
 
 export default RideHistory;
