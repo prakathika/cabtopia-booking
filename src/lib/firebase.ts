@@ -179,6 +179,10 @@ export const createBooking = async (bookingData: any) => {
   return newBookingRef.id;
 };
 
+export const cancelBooking = async (bookingId: string) => {
+  return updateBookingStatus(bookingId, "cancelled");
+};
+
 // Type for document data with timestamp - making createdAt optional to fix type error
 type FirestoreDocumentWithTimestamp = DocumentData & {
   createdAt?: Timestamp | Date;

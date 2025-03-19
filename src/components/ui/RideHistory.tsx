@@ -85,7 +85,26 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
 
   // Handle opening ride details
   const handleViewDetails = (booking: DocumentData) => {
-    setSelectedBooking(booking);
+    // If the booking doesn't have driver info and status is in-progress,
+    // add sample driver info (in a real app, this would be fetched from database)
+    if (booking.status === "in-progress" && !booking.driverId) {
+      const bookingWithDriver = {
+        ...booking,
+        driverId: "driver-1",
+        driverName: "Rajesh Kumar",
+        driverPhoto: "https://i.pravatar.cc/150?img=32",
+        driverPhone: "+91 9876543210",
+        driverRating: 4.7,
+        driverLocation: "New Delhi, India",
+        carModel: "Maruti Suzuki Swift",
+        carNumber: "DL 01 AB 1234",
+        driverExperience: "5 years",
+        driverCompletedRides: 320
+      };
+      setSelectedBooking(bookingWithDriver);
+    } else {
+      setSelectedBooking(booking);
+    }
     setDetailsOpen(true);
   };
 
@@ -111,6 +130,12 @@ const RideHistory: React.FC<RideHistoryProps> = ({ limit }) => {
     });
     
     return limit ? filtered.slice(0, limit) : filtered;
+  };
+
+  // Handle booking update after cancellation
+  const handleBookingUpdate = (updatedBooking: DocumentData) => {
+    setSelectedBooking(updatedBooking);
+    // The real-time listener will update the list automatically
   };
 
   if (loading) {
