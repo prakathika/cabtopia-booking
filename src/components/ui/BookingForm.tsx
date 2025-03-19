@@ -42,11 +42,12 @@ const formSchema = z.object({
 
 type BookingFormValues = z.infer<typeof formSchema>;
 
-interface BookingFormProps {
+export interface BookingFormProps {
+  onBookingSuccess?: (bookingId: string) => void;
   onSuccess?: (bookingId: string) => void;
 }
 
-const BookingForm: React.FC<BookingFormProps> = ({ onSuccess }) => {
+const BookingForm: React.FC<BookingFormProps> = ({ onBookingSuccess, onSuccess }) => {
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,7 +111,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ onSuccess }) => {
       
       toast.success("Ride booked successfully!");
       
-      // Call onSuccess callback if provided
+      // Call onBookingSuccess callback if provided
+      if (onBookingSuccess) {
+        onBookingSuccess(bookingId);
+      }
+      
+      // Also call onSuccess for backward compatibility
       if (onSuccess) {
         onSuccess(bookingId);
       }
